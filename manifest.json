@@ -1,0 +1,13 @@
+{
+  "name": "inject",
+  "version": "1.0",
+  "manifest_version": 3,
+  "content_scripts": [
+    {
+      "matches": ["*://*.mixcloud.com/*"],
+      "js": ["inject.js"],
+      "css": ["inject.css"]
+    }
+  ],
+  "host_permissions": ["<all_urls>"]
+}
