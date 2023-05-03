@@ -116,9 +116,30 @@ async function handleAddToPlaylistClick(event) {
       `;
   document.body.appendChild(modal);
 }
-function init() {
-  const addToPlaylistButton = document.querySelector(
-    'button[data-tooltip="Add To"]'
+
+function waitForElm(selector) {
+  return new Promise((resolve) => {
+    if (document.querySelector(selector)) {
+      return resolve(document.querySelector(selector));
+    }
+
+    const observer = new MutationObserver((mutations) => {
+      if (document.querySelector(selector)) {
+        resolve(document.querySelector(selector));
+        observer.disconnect();
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+  });
+}
+
+async function init() {
+  const addToPlaylistButton = await waitForElm(
+    '.header-action-row button[data-tooltip="Add To"]'
   );
 
   const newButton = document.createElement("button");
