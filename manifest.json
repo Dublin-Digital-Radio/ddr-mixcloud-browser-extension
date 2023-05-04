@@ -5,9 +5,9 @@
   "content_scripts": [
     {
       "matches": ["*://*.mixcloud.com/*"],
-      "js": ["inject.js"],
-      "css": ["inject.css"]
+      "js": ["build/static/js/main.js"],
+      "css": ["build/static/css/main.css"]
     }
   ],
-  "host_permissions": ["<all_urls>"]
+  "host_permissions": ["*://*.mixcloud.com/*"]
 }
