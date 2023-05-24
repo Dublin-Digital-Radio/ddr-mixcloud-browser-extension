@@ -3,7 +3,7 @@ import ReactDOM from "react-dom/client";
 import ReactModal from "react-modal";
 
 import "./index.css";
-import App from "./App";
+import { ShowPageApp } from "./ShowPageApp";
 
 function waitForElm(selector: string) {
   return new Promise<HTMLElement>((resolve) => {
@@ -25,7 +25,7 @@ function waitForElm(selector: string) {
   });
 }
 
-async function init() {
+async function initShowPage() {
   const addToPlaylistButton = await waitForElm(
     '.header-action-row button[data-tooltip="Add To"]'
   );
@@ -45,9 +45,18 @@ async function init() {
   );
   root.render(
     <React.StrictMode>
-      <App />
+      <ShowPageApp />
     </React.StrictMode>
   );
+}
+
+async function init() {
+  const pathnameParts = window.location.pathname.split("/");
+  if (pathnameParts[1] === "DublinDigitalRadio") {
+    initShowPage();
+  } else {
+    console.log("nada");
+  }
 }
 
 init();

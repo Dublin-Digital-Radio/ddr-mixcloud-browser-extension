@@ -7,7 +7,6 @@ import {
   addToPlaylist,
   Playlist,
 } from "./api";
-import "./App.css";
 
 function PlaylistSelector({ closeModal }: { closeModal: () => void }) {
   const pathnameParts = window.location.pathname.split("/");
@@ -114,7 +113,7 @@ function PlaylistSelector({ closeModal }: { closeModal: () => void }) {
   );
 }
 
-function App() {
+export function ShowPageApp() {
   const [modalIsOpen, setIsOpen] = useState(false);
   const closeModal = useCallback(() => setIsOpen(false), []);
 
@@ -136,5 +135,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
