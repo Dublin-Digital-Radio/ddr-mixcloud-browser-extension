@@ -101,7 +101,7 @@ function PlaylistSelector({ closeModal }: { closeModal: () => void }) {
             </button>
             &nbsp;
             <a
-              href={`https://www.mixcloud.com/${username}/playlists/${playlist.name}`}
+              href={`https://www.mixcloud.com/${username}/playlists/${playlist.slug}`}
               target="_blank"
               rel="noreferrer"
             >

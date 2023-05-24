@@ -30,6 +30,7 @@ export async function fetchShowCloudcastId() {
 export interface Playlist {
   id: string;
   name: string;
+  slug: string;
 }
 
 export interface PlaylistsResponse {
@@ -83,6 +84,7 @@ export async function fetchPaginatedPlaylists(
         fragment PlaylistPopoverMenuItem_playlist_1QwDtI on Playlist {
           id
           name
+          slug
           containsCloudcast(id: $cloudcastId)
         }
         `,
