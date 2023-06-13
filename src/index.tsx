@@ -27,7 +27,7 @@ function waitForElm(selector: string) {
 
 async function initShowPage() {
   const addToPlaylistButton = await waitForElm(
-    '.header-action-row button[data-tooltip="Add To"]'
+    'div[data-testid="metaButtonsInfo"] button[data-tooltip="Add To"]'
   );
 
   const ddrRoot = document.createElement("div");
