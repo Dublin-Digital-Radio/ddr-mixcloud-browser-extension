@@ -4,8 +4,10 @@ import ReactModal from "react-modal";
 import {
   fetchShowCloudcastId,
   fetchPaginatedPlaylists,
+  fetchWholePlaylistForEditing,
   addToPlaylist,
   Playlist,
+  reorderPlaylist,
 } from "./api";
 
 function PlaylistSelector({ closeModal }: { closeModal: () => void }) {
@@ -87,6 +89,21 @@ function PlaylistSelector({ closeModal }: { closeModal: () => void }) {
                     cloudcastId: showCloudcastId,
                     playlistId: playlist.id,
                   });
+                  const wholePlaylist = await fetchWholePlaylistForEditing({
+                    playlistId: playlist.id,
+                  });
+                  const wholePlaylistShowIds = wholePlaylist.map(
+                    (node) => node.id
+                  );
+                  const reorderPlaylistInput = [
+                    wholePlaylistShowIds[wholePlaylistShowIds.length - 1],
+                    ...wholePlaylistShowIds.slice(0, -1),
+                  ];
+                  await reorderPlaylist({
+                    items: reorderPlaylistInput,
+                    playlistId: playlist.id,
+                  });
+
                   setPlaylistsStatuses({ [playlist.name]: "added" });
                 } catch (error) {
                   console.error(error);

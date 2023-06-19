@@ -96,6 +96,178 @@ export async function fetchPaginatedPlaylists(
     .then((playlistsResponse) => playlistsResponse as PlaylistsResponse);
 }
 
+interface PlaylistNode {
+  id: string;
+}
+
+interface PaginatedPlaylistItemsResult {
+  edges: { node: PlaylistNode }[];
+  pageInfo: { endCursor: string; hasNextPage: boolean };
+}
+
+export async function fetchWholePlaylistForEditing({
+  playlistId,
+}: {
+  playlistId: string;
+}) {
+  let playlistNodes: PlaylistNode[] = [];
+  let cursor: string | undefined;
+  let paginatedPlaylistItemsResult;
+  const firstPageResults = await fetch("https://www.mixcloud.com/graphql", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      query: `
+        query UserPlaylistEditPaginatorQuery(
+          $count: Int = 20
+          $id: ID!
+        ) {
+          node(id: $id) {
+            id
+            ... on Playlist {
+              items(first: $count) {
+                edges {
+                  node {
+                    id
+                  }
+                  cursor
+                }
+                pageInfo {
+                  endCursor
+                  hasNextPage
+                }
+              }
+            }
+          }
+        }
+        `,
+      variables: {
+        id: playlistId,
+        count: 100,
+      },
+    }),
+  })
+    .then((response) => response.json())
+    .then(
+      (response) => response.data.node.items as PaginatedPlaylistItemsResult
+    );
+
+  playlistNodes = [...firstPageResults.edges.map((edge) => edge.node)];
+
+  if (firstPageResults.pageInfo.hasNextPage) {
+    cursor = firstPageResults.pageInfo.endCursor;
+    do {
+      paginatedPlaylistItemsResult = await fetch(
+        "https://www.mixcloud.com/graphql",
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            query: `
+            query UserPlaylistEditPaginatorQuery(
+              $count: Int = 20
+              $cursor: String
+              $id: ID!
+            ) {
+              node(id: $id) {
+                id
+                ... on Playlist {
+                  items(first: $count, after: $cursor) {
+                    edges {
+                      node {
+                        id
+                      }
+                      cursor
+                    }
+                    pageInfo {
+                      endCursor
+                      hasNextPage
+                    }
+                  }
+                }
+              }
+            }
+            `,
+            variables: {
+              id: playlistId,
+              count: 100,
+              cursor,
+            },
+          }),
+        }
+      )
+        .then((response) => response.json())
+        .then(
+          (response) => response.data.node.items as PaginatedPlaylistItemsResult
+        );
+
+      cursor = paginatedPlaylistItemsResult.pageInfo.endCursor;
+      playlistNodes = [
+        ...playlistNodes,
+        ...paginatedPlaylistItemsResult.edges.map((edge) => edge.node),
+      ];
+    } while (paginatedPlaylistItemsResult.pageInfo.hasNextPage);
+  }
+
+  return playlistNodes;
+}
+
+export async function reorderPlaylist({
+  items,
+  playlistId,
+}: {
+  items: string[];
+  playlistId: string;
+}) {
+  const csrfToken =
+    document.cookie
+      .split(";")
+      .map((keyValueString) => keyValueString.trim().split("="))
+      .find((keyValue) => keyValue[0] === "csrftoken")?.[1] ?? "";
+
+  return fetch("https://www.mixcloud.com/graphql", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-csrftoken": csrfToken,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation reorderPlaylistMutation(
+          $input: ReorderPlaylistMutationInput!
+          $itemCount: Int!
+        ) {
+          reorderPlaylist(input: $input) {
+            playlist {
+              items(first: $itemCount) {
+                edges {
+                  node {
+                    id
+                  }
+                }
+              }
+              id
+            }
+          }
+        }
+      `,
+      variables: {
+        input: {
+          items,
+          playlistId,
+        },
+        itemCount: items.length,
+      },
+    }),
+  })
+    .then((response) => response.json())
+    .then((response) => response.data.reorderPlaylist.playlist as Playlist);
+}
+
 export async function addToPlaylist({
   cloudcastId,
   playlistId,
@@ -122,8 +294,13 @@ export async function addToPlaylist({
         ) {
           addPlaylistItem(input: $input) {
             playlist {
-              id
-              name
+              items(first: 100) {
+                edges {
+                  node {
+                    id
+                  }
+                }
+              }
             }
           }
         }
