@@ -98,11 +98,42 @@ export async function fetchPaginatedPlaylists(
 
 interface PlaylistNode {
   id: string;
+  cloudcast: {
+    publishDate: string;
+  };
 }
 
 interface PaginatedPlaylistItemsResult {
   edges: { node: PlaylistNode }[];
   pageInfo: { endCursor: string; hasNextPage: boolean };
+}
+
+export async function playlistLookup({ slug }: { slug: string }) {
+  return fetch("https://www.mixcloud.com/graphql", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      query: `
+        query UserPlaylistQuery(
+          $lookup: PlaylistLookup!
+        ) {
+          playlist: playlistLookup(lookup: $lookup) {
+            id
+          }
+        }
+        `,
+      variables: {
+        lookup: {
+          username: "DublinDigitalRadio",
+          slug,
+        },
+      },
+    }),
+  })
+    .then((response) => response.json())
+    .then((response) => response.data.playlist as Playlist);
 }
 
 export async function fetchWholePlaylistForEditing({
@@ -131,6 +162,9 @@ export async function fetchWholePlaylistForEditing({
                 edges {
                   node {
                     id
+                    cloudcast {
+                      publishDate
+                    }
                   }
                   cursor
                 }
@@ -180,6 +214,9 @@ export async function fetchWholePlaylistForEditing({
                     edges {
                       node {
                         id
+                        cloudcast {
+                          publishDate
+                        }
                       }
                       cursor
                     }

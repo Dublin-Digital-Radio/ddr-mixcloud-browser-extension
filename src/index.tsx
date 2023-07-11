@@ -4,6 +4,11 @@ import ReactModal from "react-modal";
 
 import "./index.css";
 import { ShowPageApp } from "./ShowPageApp";
+import {
+  fetchWholePlaylistForEditing,
+  playlistLookup,
+  reorderPlaylist,
+} from "./api";
 
 function waitForElm(selector: string) {
   return new Promise<HTMLElement>((resolve) => {
@@ -50,10 +55,48 @@ async function initShowPage() {
   );
 }
 
+async function initPlaylistPage() {
+  const pathnameParts = window.location.pathname.split("/");
+  const playlistSlug = pathnameParts[3];
+  const playallButton = await waitForElm(
+    'div[data-testid="adminToolsPageContainer"] button[data-testid="play-all"]'
+  );
+
+  const sortNewestFirstButton = document.createElement("button");
+  sortNewestFirstButton.textContent = "Sort newest first";
+  sortNewestFirstButton.onclick =
+    async function onSortNewestFirstButtonClick() {
+      const playlistFromSlug = await playlistLookup({ slug: playlistSlug });
+      const playlistNodes = await fetchWholePlaylistForEditing({
+        playlistId: playlistFromSlug.id,
+      });
+
+      const sortedPlaylistIds = playlistNodes
+        .sort(
+          (nodeA, nodeB) =>
+            new Date(nodeB.cloudcast.publishDate).getTime() -
+            new Date(nodeA.cloudcast.publishDate).getTime()
+        )
+        .map((node) => node.id);
+      await reorderPlaylist({
+        playlistId: playlistFromSlug.id,
+        items: sortedPlaylistIds,
+      });
+
+      window.location.reload();
+    };
+  playallButton.parentNode?.appendChild(sortNewestFirstButton);
+}
+
 async function init() {
   const pathnameParts = window.location.pathname.split("/");
-  if (pathnameParts[1] === "DublinDigitalRadio") {
+  if (
+    pathnameParts[1] === "DublinDigitalRadio" &&
+    pathnameParts[2] !== "playlists"
+  ) {
     initShowPage();
+  } else if (pathnameParts[2] === "playlists") {
+    initPlaylistPage();
   } else {
     console.log("nada");
   }
