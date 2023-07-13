@@ -88,7 +88,7 @@ async function initPlaylistPage() {
   playallButton.parentNode?.appendChild(sortNewestFirstButton);
 }
 
-async function init() {
+function onUrlChange() {
   const pathnameParts = window.location.pathname.split("/");
   if (
     pathnameParts[1] === "DublinDigitalRadio" &&
@@ -100,6 +100,19 @@ async function init() {
   } else {
     console.log("nada");
   }
+}
+
+function init() {
+  let lastUrl = window.location.href;
+  onUrlChange();
+
+  new MutationObserver(() => {
+    const url = window.location.href;
+    if (url !== lastUrl) {
+      lastUrl = url;
+      onUrlChange();
+    }
+  }).observe(document, { subtree: true, childList: true });
 }
 
 init();
