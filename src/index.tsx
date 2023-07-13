@@ -30,6 +30,26 @@ function waitForElm(selector: string) {
   });
 }
 
+function waitForElms(selector: string) {
+  return new Promise<NodeListOf<HTMLElement>>((resolve) => {
+    if (document.querySelectorAll(selector).length > 0) {
+      return resolve(document.querySelectorAll(selector));
+    }
+
+    const observer = new MutationObserver(() => {
+      if (document.querySelectorAll(selector).length > 0) {
+        resolve(document.querySelectorAll(selector));
+        observer.disconnect();
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+  });
+}
+
 async function initShowPage() {
   const addToPlaylistButton = await waitForElm(
     'div[data-testid="metaButtonsInfo"] button[data-tooltip="Add To"]'
@@ -88,6 +108,23 @@ async function initPlaylistPage() {
   playallButton.parentNode?.appendChild(sortNewestFirstButton);
 }
 
+async function initMyShowsPage() {
+  const addToPlaylistButtons = await waitForElms(
+    'button[data-tooltip="Add To"]'
+  );
+  addToPlaylistButtons.forEach(
+    (button) =>
+      ((button as HTMLButtonElement).onclick = () =>
+        console.log(
+          (
+            button.parentElement?.parentElement?.previousSibling
+              ?.previousSibling?.childNodes[1].firstChild
+              ?.firstChild as HTMLAnchorElement
+          )?.href
+        ))
+  );
+}
+
 function onUrlChange() {
   const pathnameParts = window.location.pathname.split("/");
   if (
@@ -97,6 +134,10 @@ function onUrlChange() {
     initShowPage();
   } else if (pathnameParts[2] === "playlists") {
     initPlaylistPage();
+  } else if (
+    `${pathnameParts[2]}/${pathnameParts[3]}` === "my-shows/published"
+  ) {
+    initMyShowsPage();
   } else {
     console.log("nada");
   }
